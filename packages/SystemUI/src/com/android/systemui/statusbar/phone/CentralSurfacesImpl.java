@@ -2124,6 +2124,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     }
 
     @Override
+    public void toggleSettingsPanel() {
+        mCommandQueueCallbacks.toggleSettingsPanel();
+    }
+
+    @Override
     public boolean isPanelExpanded() {
         return mPanelExpanded;
     }
