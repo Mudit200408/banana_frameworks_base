@@ -662,12 +662,10 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
                 mClockIconsSeparatorLayoutParams.width = topCutout.width();
                 mShowClockIconsSeparator = true;
                 setSeparatorVisibility(mKeyguardExpansionFraction == 0f);
-<<<<<<< HEAD
-=======
+
                 mHasLeftCutout = false;
                 mHasRightCutout = false;
                 mHasCenterCutout = true;
->>>>>>> 8691f54fc122 (SystemUI: Animate cutout padding for QS clock)
             }
         }
         mDatePrivacySeparator.setLayoutParams(datePrivacySeparatorLayoutParams);
@@ -730,17 +728,7 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
             mHeaderPaddingRight = headerPaddingRight;
             headerPaddingUpdated = true;
         }
-
-<<<<<<< HEAD
-        mDatePrivacyView.setPadding(paddingLeft,
-                mStatusBarPaddingTop,
-                paddingRight,
-                0);
-        mStatusIconsView.setPadding(paddingLeft,
-                mStatusBarPaddingTop,
-                paddingRight,
-
-=======
+        
         // Update header animator with new paddings
         if (headerPaddingUpdated) {
             updateAnimators();
@@ -752,7 +740,6 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
         mStatusIconsView.setPadding(0,
                 mWaterfallTopInset,
                 0,
->>>>>>> 8691f54fc122 (SystemUI: Animate cutout padding for QS clock)
                 0);
     }
 
