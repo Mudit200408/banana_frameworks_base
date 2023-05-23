@@ -44,9 +44,6 @@ import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
-
 /**
  * Performs the animated transition between the QQS and QS views.
  *
@@ -140,18 +137,11 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
     private float mLastPosition;
     private final QSTileHost mHost;
     private final Executor mExecutor;
-    private final TunerService mTunerService;
     private boolean mShowCollapsedOnKeyguard;
     private int mQQSTop;
-    private boolean isA11Style;
 
     private int[] mTmpLoc1 = new int[2];
     private int[] mTmpLoc2 = new int[2];
-
-    private final Function1<Boolean, Unit> mMediaHostVisibilityListener = (visible) -> {
-        requestAnimatorUpdate();
-        return null;
-    };
 
     @Inject
     public QSAnimator(QS qs, QuickQSPanel quickPanel, QuickStatusBarHeader quickStatusBarHeader,
@@ -166,7 +156,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
         mQuickStatusBarHeader = quickStatusBarHeader;
         mHost = qsTileHost;
         mExecutor = executor;
-        mTunerService = tunerService;
         mQSExpansionPathInterpolator = qsExpansionPathInterpolator;
         mHost.addCallback(this);
         mQsPanelController.addOnAttachStateChangeListener(this);
@@ -181,7 +170,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
             Log.w(TAG, "QS Not using page layout");
         }
         mQsPanelController.setPageListener(this);
-        isA11Style = mTunerService.getValue(QSPanel.QS_UI_STYLE, 0) == 1;
     }
 
     public void onRtlChanged() {
@@ -225,13 +213,11 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
     @Override
     public void onViewAttachedToWindow(@NonNull View view) {
         updateAnimators();
-        mQuickQSPanelController.mMediaHost.addVisibilityChangeListener(mMediaHostVisibilityListener);
     }
 
     @Override
     public void onViewDetachedFromWindow(@NonNull View v) {
         mHost.removeCallback(this);
-        mQuickQSPanelController.mMediaHost.removeVisibilityChangeListener(mMediaHostVisibilityListener);
     }
 
     private void addNonFirstPageAnimators(int page) {
@@ -364,8 +350,8 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
 
                     // Icons
                     translateContent(
-                            isA11Style ? quickTileView.getIconWithBackground() : quickTileView.getIcon(),
-                            isA11Style ? tileView.getIconWithBackground() : tileView.getIcon(),
+                            quickTileView.getIcon(),
+                            tileView.getIcon(),
                             view,
                             xOffset,
                             yOffset,
@@ -407,13 +393,13 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     // Therefore, we use a quadratic interpolator animator to animate the alpha
                     // for tiles in QQS to match.
                     quadraticInterpolatorBuilder
-                            .addFloat(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel(), "alpha", 0, 1);
+                            .addFloat(quickTileView.getSecondaryLabel(), "alpha", 0, 1);
                     nonFirstPageAlphaBuilder
-                            .addFloat(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel(), "alpha", 0, 0);
+                            .addFloat(quickTileView.getSecondaryLabel(), "alpha", 0, 0);
 
                     mAnimatedQsViews.add(tileView);
                     mAllViews.add(quickTileView);
-                    mAllViews.add(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel());
+                    mAllViews.add(quickTileView.getSecondaryLabel());
                 } else if (!isIconInAnimatedRow(count)) {
                     // Pretend there's a corresponding QQS tile (for the position) that we are
                     // expanding from.
@@ -432,13 +418,8 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     mOtherFirstPageTilesHeightAnimator.addView(tileView);
                     tileView.setClipChildren(true);
                     tileView.setClipToPadding(true);
-                    firstPageBuilder.addFloat(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel(), "alpha", 0, 1);
-                    mAllViews.add(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel());
-                }
-
-                QSTileView quickTileView = mQuickQSPanelController.getTileView(tile);
-                if (quickTileView != null) {
-                    quickTileView.getSecondaryLabel().setAlpha(0f);
+                    firstPageBuilder.addFloat(tileView.getSecondaryLabel(), "alpha", 0, 1);
+                    mAllViews.add(tileView.getSecondaryLabel());
                 }
 
                 mAllViews.add(tileView);
@@ -580,12 +561,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
         mBrightnessOpacityAnimator = null;
         View qsBrightness = mQsPanelController.getBrightnessView();
         View qqsBrightness = mQuickQSPanelController.getBrightnessView();
-
-        if (mTunerService.getValue(QSPanel.QS_SHOW_BRIGHTNESS_SLIDER, 1) == 0) {
-            qsBrightness.setVisibility(View.GONE);
-            qqsBrightness.setVisibility(View.GONE);
-        }
-
         if (qqsBrightness != null && qqsBrightness.getVisibility() == View.VISIBLE) {
             // animating in split shade mode
             mAnimatedQsViews.add(qsBrightness);
@@ -598,8 +573,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     .addFloat(qsBrightness, "sliderScaleY", 0.3f, 1)
                     .addFloat(qqsBrightness, "translationY", 0, translationY)
                     .setInterpolator(mQSExpansionPathInterpolator.getYInterpolator())
-                    .setInterpolator(mQuickQSPanelController.mMediaHost.getVisible() ?
-                            Interpolators.ALPHA_OUT : Interpolators.SLOWDOWN)
                     .build();
         } else if (qsBrightness != null) {
             // The brightness slider's visible bottom edge must maintain a constant margin from the
